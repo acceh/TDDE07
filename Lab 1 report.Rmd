@@ -1,0 +1,54 @@
+---
+title: "Lab 1 - TDDE07"
+author: "Axel Holmberg (axeho681), Wilhelm Hansson (wilha431)"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+library(ggplot2)
+```
+
+## 1.
+
+### a)
+
+```{r}
+a0 = 2
+b0 = 2
+s = 5
+f = 15
+x_vector = seq(1, 10000, 1)
+set.seed(12345)
+distrubition =rbeta(x_vector, a0+s, b0+f)
+
+y_calced_mean = c(1:length(x_vector))
+for (i  in x_vector) {
+	y_calced_mean[i] = mean(distrubition[0:i])
+}
+
+qplot(x=x_vector,y=y_calced_mean, geom="line")+
+	labs(x="Number of draws", y="Mean", title="Mean as a function of number of draws")
+
+```
+
+Above is a graph that shows the mean as a function of the number of draws. As one can see it converges to about $0.292$. To calculate the true value for the mean of the posterior the following values are used $\alpha =\alpha_o + s  = 2  + 5$ and $\beta = \beta_0 + f = 2 + 15$ and the formula to calculate the mean of a beta distribution is $E(\theta|y) = \alpha / (\alpha + \beta)$ where $\theta|y \sim Beta(a_0 + s, b_0+f)=Beta(7,17)$. The true value of the mean is $0.2917$.
+
+```{r}
+
+y_calced_sd = c(1:length(x_vector))
+for (i  in x_vector) {
+	y_calced_sd[i] = sd(distrubition[0:i])
+}
+
+qplot(x=x_vector,y=y_calced_sd, geom="line")+
+	labs(x="Number of draws", y="Standard deviation", title="Standard deviation as a function of number of draws")
+
+
+```
+
+Above is a graph that shows the standard deviation as a function of the number of draws. As one can see it converges to about $0.091$. To calculate the true value for the standard deviation of the posterior the following values are used $\alpha =\alpha_o + s  = 2  + 5$ and $\beta = \beta_0 + f = 2 + 15$ and the formula to calculate the standard deviation of a beta distribution is $SD(\theta|y)= \sqrt{V(\theta|y)} = \sqrt{\alpha \beta / ((\alpha + \beta)^2(\alpha + \beta + 1))}$ where $\theta|y \sim Beta(a_0 + s, b_0+f)=Beta(7,17)$. The true value of the standard deviation is $0.0901$.
