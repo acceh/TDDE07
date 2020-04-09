@@ -82,3 +82,93 @@ density(log_odds)
 ```
 
 Above is a histogram of the log-odds. The log-odds seems to be normally distributed with a mean of about $-1$. 
+
+## 2.
+
+### a)
+
+```{r}
+library(LaplacesDemon)
+observations <- c(44, 25, 45, 52, 30, 63, 19, 50, 34, 69)
+n <- length(observations)
+my <- 3.7
+number_of_draws <- 10000
+set.seed(12345)
+
+
+tausquared <-
+	sum((log(observations) - my) ^ 2) / length(observations)
+
+sigma_sq <- rinvchisq(number_of_draws, n, tausquared)
+
+interval = seq(min(sigma_sq), max(sigma_sq), 0.001)
+invchisq = dinvchisq(interval, n, tausquared)
+
+
+plot <-
+	ggplot() + geom_histogram(aes(x = sigma_sq, y = ..density..), fill = "gray", binwidth = 0.02) + geom_line(aes(x =interval, y = invchisq), position = "stack") + labs(x="Sigma Squared", y = "Density", title="Draws from posterior against the theoretical posterior distributon.")
+
+plot
+
+```
+
+
+```{r}
+
+gini <- 2*pnorm(sqrt(sigma_sq)/sqrt(2))
+
+plot_gini <- ggplot() + geom_histogram(aes(x=gini, y=..density..), binwidth = 0.001)
+plot_gini
+
+```
+
+
+
+```{r}
+library(HDInterval)
+
+interval_pin <- p.interval(gini, HPD=FALSE, prob=0.9)
+
+gini_density <- density(gini)
+
+interval_hdi <- hdi(gini_density, credMass=0.9)
+
+
+
+plot_CI <- plot_gini + geom_vline(aes(xintercept=c(interval_pin[1,1], interval_pin[1,2]),color="ETI")) + 
+	geom_vline(aes(xintercept=c(interval_hdi["lower"], interval_hdi["upper"]),color="HDI")) + scale_color_manual(name = '',
+    values = c(
+      'ETI' = 'red',
+      'HDI' = 'green'
+    ))
+plot_CI
+
+```
+
+```{r}
+
+directions <-
+	c(-2.44, 2.14, 2.54, 1.83, 2.02, 2.33, -2.79, 2.23, 2.07, 2.02)
+
+mu <- 2.39
+
+p_y_given_k_mu <- c()
+
+k_v = seq(0.001,10,0.01)
+
+posterior <- c()
+
+for (o in 1:length(k_v)) {
+	probs <- c()
+	k <- k_v[o]
+	for (i in 1:length(directions)) {
+		y <- directions[i]
+		
+		probs[i] <- exp(k * cos(y - mu)) / (2 * pi * besselI(k, 0))
+	}
+	posterior[o] <- prod(probs) * dexp(k,1) #product of likelihood for y1...yn * prior for k
+}
+
+
+
+```

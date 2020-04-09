@@ -43,3 +43,43 @@ manipulate(
 )
 
 BetaPriorPostPlot(1,1,20,0.25)
+
+
+# Equal tail interval
+# 
+G <- gini
+equal_tail_interval = quantile(G, probs=c(0.05, 0.95))
+
+# Highest Posterior Density
+gd = density(G)
+# Order x and y by y from high to low
+ordered_x = gd$x[order(-gd$y)]
+ordered_y = gd$y[order(-gd$y)]
+
+# Iterate until 95% of prob. is captured
+prob_mass = 0
+total_mass = sum(gd$y)
+for(i in 1:length(gd$y)){
+	prob_mass = prob_mass + ordered_y[i]
+	if(prob_mass / total_mass >= 0.90){
+		break
+	}
+}
+
+
+
+# Calculate the interval
+# 
+ grid_w = 6
+grid_h = 5
+a = min(ordered_x[1:i])
+b = max(ordered_x[1:i])
+highest_posterior_density = c(a, b)
+
+plot(gd, col="red", lwd=2, main="2.3 Credibility intervals")
+lines(equal_tail_interval, rep(0.12, 2), col="black", lwd=3)
+lines(highest_posterior_density, rep(0.02, 2), col="gray", lwd=3)
+legend("topright", 
+			 legend = c("ETI","HPD"),
+			 fill = c("black", "gray"),
+			 inset = 0.02)
