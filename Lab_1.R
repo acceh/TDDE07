@@ -18,6 +18,9 @@ manipulate(
 ## Plotting the prior-to-posterior mapping for the Bernoulli model.
 ####################################################################
 
+
+
+
 BetaPriorPostPlot <- function(a,b,n,p){
 	xGrid <- seq(0.001, 0.999, by=0.001)
 	normalizedLikelihood = dbeta(xGrid, n*p+1, n*(1-p)+1)

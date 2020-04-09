@@ -24,11 +24,11 @@ s = 5
 f = 15
 x_vector = seq(1, 10000, 1)
 set.seed(12345)
-distrubition =rbeta(x_vector, a0+s, b0+f)
+distribution =rbeta(x_vector, a0+s, b0+f)
 
 y_calced_mean = c(1:length(x_vector))
 for (i  in x_vector) {
-	y_calced_mean[i] = mean(distrubition[0:i])
+	y_calced_mean[i] = mean(distribution[0:i])
 }
 
 qplot(x=x_vector,y=y_calced_mean, geom="line")+
@@ -42,7 +42,7 @@ Above is a graph that shows the mean as a function of the number of draws. As on
 
 y_calced_sd = c(1:length(x_vector))
 for (i  in x_vector) {
-	y_calced_sd[i] = sd(distrubition[0:i])
+	y_calced_sd[i] = sd(distribution[0:i])
 }
 
 qplot(x=x_vector,y=y_calced_sd, geom="line")+
@@ -52,3 +52,33 @@ qplot(x=x_vector,y=y_calced_sd, geom="line")+
 ```
 
 Above is a graph that shows the standard deviation as a function of the number of draws. As one can see it converges to about $0.091$. To calculate the true value for the standard deviation of the posterior the following values are used $\alpha =\alpha_o + s  = 2  + 5$ and $\beta = \beta_0 + f = 2 + 15$ and the formula to calculate the standard deviation of a beta distribution is $SD(\theta|y)= \sqrt{V(\theta|y)} = \sqrt{\alpha \beta / ((\alpha + \beta)^2(\alpha + \beta + 1))}$ where $\theta|y \sim Beta(a_0 + s, b_0+f)=Beta(7,17)$. The true value of the standard deviation is $0.0901$.
+
+### b)
+
+```{r}
+
+classified = ifelse(distribution > 0.3, 1, 0)
+classified_table = table(classified)
+counted_classified = classified_table[names(classified_table)==1]
+
+classified_probabilty = counted_classified/length(distribution)
+classified_probabilty
+
+true_probability_value = 1- pbeta(0.3, a0+s, b0+f)
+
+```
+
+The true value of the probability is `r true_probability_value` and the the calculated probability is `r classified_probabilty`. They are almost equal.
+
+### c)
+
+```{r}
+
+log_odds = log(distribution/(1-distribution))
+hist(log_odds)
+
+density(log_odds)
+
+```
+
+Above is a histogram of the log-odds. The log-odds seems to be normally distributed with a mean of about $-1$. 
