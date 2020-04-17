@@ -1,85 +1,156 @@
-library(manipulate)
+library(ggplot2)
+set.seed(12345)
+#1 a)
+a0 = 2
+b0 = 2
+s = 5
+f = 15
+x_vector = seq(1, 10000, 1)
+set.seed(12345)
+distribution =rbeta(x_vector, a0+s, b0+f)
 
-BetaPlot <- function(a,b){
-	xGrid <- seq(0.001, 0.999, by=0.001)
-	prior = dbeta(xGrid, a, b)
-	maxDensity <- max(prior) # Use to make the y-axis high enough
-	plot(xGrid, prior, type = 'l', lwd = 3, col = "blue", xlim <- c(0,1), ylim <- c(0, maxDensity), xlab = "theta", 
-			 ylab = 'Density', main = 'Beta(a,b) density')
+y_calced_mean = c(1:length(x_vector))
+for (i  in x_vector) {
+	y_calced_mean[i] = mean(distribution[0:i])
 }
 
-manipulate(
-	BetaPlot(a,b),
-	a = slider(1, 10, step=1, initial = 2, label = "The hyperparameter a in Beta(a,b) density"),
-	b = slider(1, 10, step=1, initial = 2, label = "The hyperparameter b in Beta(a,b) density")
-)
-
-####################################################################
-## Plotting the prior-to-posterior mapping for the Bernoulli model.
-####################################################################
+qplot(x=x_vector,y=y_calced_mean, geom="line")+
+	labs(x="Number of draws", y="Mean", title="Mean as a function of number of draws")
 
 
-
-
-BetaPriorPostPlot <- function(a,b,n,p){
-	xGrid <- seq(0.001, 0.999, by=0.001)
-	normalizedLikelihood = dbeta(xGrid, n*p+1, n*(1-p)+1)
-	prior = dbeta(xGrid, a, b)
-	posterior = dbeta(xGrid, a+n*p, b+n*(1-p))
-	maxDensity <- max(normalizedLikelihood, prior, posterior) # Use to make the y-axis high enough
-	plot(xGrid, normalizedLikelihood, type = 'l', lwd = 3, col = "blue", xlim <- c(0,1), ylim <- c(0, maxDensity), xlab = "theta", 
-			 ylab = 'Density', main = 'Bernoulli model - Beta(a,b) prior')
-	lines(xGrid, posterior, lwd = 3, col = "red")
-	lines(xGrid, prior, lwd = 3, col = "green")
-	legend(x = 0.01, y = maxDensity*0.95, legend = c("Likelihood (normalized)", "Prior", "Posterior"), col = c("blue","green","red"), lwd = c(3,3,3), cex = 0.7)
+y_calced_sd = c(1:length(x_vector))
+for (i  in x_vector) {
+	y_calced_sd[i] = sd(distribution[0:i])
 }
 
-manipulate(
-	BetaPriorPostPlot(a,b,n,p),
-	a = slider(1, 100, step=1, initial = 2, label = "The hyperparameter a in Beta(a,b) prior"),
-	b = slider(1, 100, step=1, initial = 2, label = "The hyperparameter b in Beta(a,b) prior"),
-	n = slider(1, 1000, step=1, initial = 20, label = "The number of trials, n"),
-	p = slider(0, 1, step=0.01, initial = 0.4, label = "Success proportion in the sample")
-)
+qplot(x=x_vector,y=y_calced_sd, geom="line")+
+	labs(x="Number of draws", y="Standard deviation", title="Standard deviation as a function of number of draws")
 
-BetaPriorPostPlot(1,1,20,0.25)
+#1 b)
+
+classified = ifelse(distribution > 0.3, 1, 0)
+classified_table = table(classified)
+counted_classified = classified_table[names(classified_table)==1]
+
+classified_probabilty = counted_classified/length(distribution)
+classified_probabilty
+
+true_probability_value = 1- pbeta(0.3, a0+s, b0+f)
+
+#1 c)
+
+log_odds = log(distribution/(1-distribution))
+hist(log_odds)
+
+density(log_odds)
+
+#2 a)
+
+library(LaplacesDemon)
+observations <- c(44, 25, 45, 52, 30, 63, 19, 50, 34, 69)
+n <- length(observations)
+my <- 3.7
+number_of_draws <- 10000
+set.seed(12345)
 
 
-# Equal tail interval
-# 
-G <- gini
-equal_tail_interval = quantile(G, probs=c(0.05, 0.95))
+tausquared <-
+	sum((log(observations) - my) ^ 2) / length(observations)
 
-# Highest Posterior Density
-gd = density(G)
-# Order x and y by y from high to low
-ordered_x = gd$x[order(-gd$y)]
-ordered_y = gd$y[order(-gd$y)]
+sigma_sq <- rinvchisq(number_of_draws, n, tausquared)
 
-# Iterate until 95% of prob. is captured
-prob_mass = 0
-total_mass = sum(gd$y)
-for(i in 1:length(gd$y)){
-	prob_mass = prob_mass + ordered_y[i]
-	if(prob_mass / total_mass >= 0.90){
-		break
+interval = seq(min(sigma_sq), max(sigma_sq), 0.001)
+invchisq = dinvchisq(interval, n, tausquared)
+
+
+plot <-
+	ggplot() + geom_histogram(aes(x = sigma_sq, y = ..density..), fill = "gray", binwidth = 0.02) + geom_line(aes(x =interval, y = invchisq), position = "stack") + labs(x="Sigma Squared", y = "Density", title="Draws from posterior against the theoretical posterior distributon.")
+
+plot
+
+#2 b)
+
+gini <- 2*pnorm(sqrt(sigma_sq)/sqrt(2))
+
+plot_gini <- ggplot() + geom_histogram(aes(x=gini, y=..density..), binwidth = 0.001)
+plot_gini
+
+#2 c)
+
+library(HDInterval)
+
+interval_pin <- p.interval(gini, HPD=FALSE, prob=0.9)
+
+gini_density <- density(gini)
+
+interval_hdi <- hdi(gini_density, credMass=0.9)
+
+
+
+plot_CI <- plot_gini + geom_vline(aes(xintercept=c(interval_pin[1,1], interval_pin[1,2]),color="ETI")) + 
+	geom_vline(aes(xintercept=c(interval_hdi["lower"], interval_hdi["upper"]),color="HDI")) + scale_color_manual(name = '',
+																																																							 values = c(
+																																																							 	'ETI' = 'red',
+																																																							 	'HDI' = 'green'
+																																																							 ))
+plot_CI
+
+#3 a)
+
+directions <-
+	c(-2.44, 2.14, 2.54, 1.83, 2.02, 2.33, -2.79, 2.23, 2.07, 2.02)
+
+mu <- 2.39
+
+p_y_given_k_mu <- c()
+
+k_v = seq(0.001,10,0.01)
+
+posterior <- c()
+likelihood <- c()
+prior <- c()
+
+for (o in 1:length(k_v)) {
+	probs <- c()
+	k <- k_v[o]
+	for (i in 1:length(directions)) {
+		y <- directions[i]
+		
+		probs[i] <- exp(k * cos(y - mu)) / (2 * pi * besselI(k, 0)) #likelihood
 	}
+	likelihood[o] <- prod(probs)
+	posterior[o] <- prod(probs) * dexp(k,1) #product of likelihood for y1...yn * prior for k
+	prior[o] <- dexp(k,1)
 }
 
+plotposterior <-
+	ggplot() + geom_line((aes(
+		x = k_v,
+		y = posterior / sum(posterior),
+		color = "Posterior"
+	))) + geom_line((
+		aes(
+			x = k_v,
+			y = likelihood / sum(likelihood),
+			color = "Likelihood"
+		)
+	))  + geom_line((aes(
+		x = k_v,
+		y = prior / sum(prior),
+		color = "Prior"
+	))) + labs(x = "k", y = "Density", title = "Posterior distribution of k") + scale_color_manual(
+		name = '',
+		values = c(
+			'Prior' = 'red',
+			'Posterior' = 'green',
+			'Likelihood' = 'blue'
+		)
+	)
+plotposterior
 
+#3 b)
 
-# Calculate the interval
-# 
- grid_w = 6
-grid_h = 5
-a = min(ordered_x[1:i])
-b = max(ordered_x[1:i])
-highest_posterior_density = c(a, b)
+plotkmode <- plotposterior + geom_vline(aes(xintercept=k_v[which.max(posterior)]))
+plotkmode
 
-plot(gd, col="red", lwd=2, main="2.3 Credibility intervals")
-lines(equal_tail_interval, rep(0.12, 2), col="black", lwd=3)
-lines(highest_posterior_density, rep(0.02, 2), col="gray", lwd=3)
-legend("topright", 
-			 legend = c("ETI","HPD"),
-			 fill = c("black", "gray"),
-			 inset = 0.02)
+print(k_v[which.max(posterior)])
