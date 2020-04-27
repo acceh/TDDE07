@@ -78,7 +78,7 @@ The plot above shows the regression curve for the temperature. The tuning of the
 
 
 ```{r}
-
+library(Rmisc)
 X <- cbind(rep.int(1, 365), data[, 1], I(data[, 1] ^ 2))
 Y <- data[, 2]
 
@@ -155,14 +155,19 @@ ggplot() + geom_point(aes(x=data$time,y=data$temp)) + geom_line(aes(x=data$time,
 
 ```
 
-
+### c)
 
 ```{r}
 
-x_tilde <- data$time[which(max(line) == line)]
+x_tilde <- data$time[which(max(cis[,2]) == cis[,2])]
 
 ```
 
+$\tilde{x} = $ `r x_tilde`, which means that the hottest day is sometime in the middle of July.
+
+### d)
+
+A suitable prior to mitigate the potential problem of overfitting would be to set parameters of $\mu_0$ and $\Omega_0$ to values the would result in a $\beta = 0$ for the higher order terms. In this case the $\mu_{4...7} = 0$, and since it is $\Omega^{-1}$ that is used the values of $\Omega$ should be large.
 
 ```{r}
 
