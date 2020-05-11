@@ -33,6 +33,7 @@ Sigma <- tau^2*diag(nPara);
 # this function must be the one that we optimize on, i.e. the regression coefficients.
 
 LogPostLogistic <- function(betaVect,y,X,mu,Sigma){
+  
   nPara <- length(betaVect);
   linPred <- X%*%betaVect;
   
@@ -42,7 +43,7 @@ LogPostLogistic <- function(betaVect,y,X,mu,Sigma){
   
   # evaluating the prior
   logPrior <- dmvnorm(betaVect, matrix(0,nPara,1), Sigma, log=TRUE);
-  print(logPrior)
+  
   # add the log prior and log-likelihood together to get log posterior
   return(logLik + logPrior)
 }
@@ -93,18 +94,10 @@ print('The approximate posterior standard deviation is:')
 print(approxPostStd)
 
 # Plotting some of the marginal posteriors
-par(mfrow = c(2, 2))
-for (k in 1:4) {
-  betaGrid <- seq(0, postMode[k] + 4 * approxPostStd[k], length = 1000)
-  plot(
-    betaGrid,
-    dnorm(x = betaGrid, mean = postMode[k], sd = approxPostStd[k]),
-    type = "l",
-    lwd = 2,
-    main = names(postMode)[k],
-    ylab = '',
-    xlab = expression(beta)
-  )
+par(mfrow = c(2,2))
+for (k in 1:4){
+  betaGrid <- seq(0, postMode[k] + 4*approxPostStd[k], length = 1000)
+  plot(betaGrid, dnorm(x = betaGrid, mean = postMode[k], sd = approxPostStd[k]), type = "l", lwd = 2, main = names(postMode)[k], ylab = '', xlab = expression(beta))
 }
 
 # Plot a bivariate distribution for two beta coefficients - they are almost independent in this example.
@@ -120,4 +113,3 @@ for (i in 1:length(beta1Values)){
 }
 contour(beta1Values, beta2Values, dens)
 postCov[par1,par2]/(sqrt(postCov[par1,par1])*sqrt(postCov[par2,par2]))
-
