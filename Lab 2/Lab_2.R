@@ -156,10 +156,10 @@ LogPostLogistic <- function(betaVect, y, X, mu, Sigma) {
 	
 	linPred <- X %*% betaVect
 	
-	print(betaVect)
+	#print(betaVect)
 	# evaluating the log-likelihood
 	logLik <- sum(linPred * y - log(1 + exp(linPred)))
-	
+	#print(logLik)
 	if (abs(logLik) == Inf)
 		logLik = -20000
 	# Likelihood is not finite, stear the optimizer away from here!
@@ -168,7 +168,7 @@ LogPostLogistic <- function(betaVect, y, X, mu, Sigma) {
 	logPrior <- dmvnorm(betaVect, matrix(0, nPara, 1), Sigma, log = TRUE)
 	
 	print(logLik + logPrior)
-	print(betaVect)
+	#print(betaVect)
 	# add the log prior and log-likelihood together to get log posterior
 	return(logLik + logPrior)
 }
