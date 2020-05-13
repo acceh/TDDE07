@@ -75,7 +75,7 @@ for (sigma_sq in sigmas_sq) {
 	beta_posterior <- rmvnorm(1, my_n, sigma_sq * solve(omega_n))
 	betas_posterior <- rbind(betas_posterior, beta_posterior)
 }
-
+ 
 hist(betas_posterior[, 1], xlab = "B0 (intercept)")
 hist(betas_posterior[, 2], xlab = "B1 (slope)")
 hist(betas_posterior[, 3], xlab = "B2 (curve)")
