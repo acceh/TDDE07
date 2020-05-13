@@ -73,14 +73,14 @@ hist(thetas[,1], main="Mu")
 
 As one can see above the values from the Gibbs model varies as it simulates $\mu$ for the joint posterior.
 
+```{r}
+plot(thetas[,2], type="l", main="Sigma squared")
+```
+
 
 ```{r}
 
 hist(thetas[,2], main="Sigma squared")
-```
-
-```{r}
-plot(thetas[,2], type="l", main="Sigma squared")
 ```
 
 As one can see above the values from the Gibbs model varies as it simulates $\sigma^2$ for the joint posterior.
@@ -201,8 +201,8 @@ print(B_tilde)
 
 sigmaInput <- inverse_hessian
 initalThetaInput <- c(rep(0,nrow(sigmaInput)))
-c_Input <- 1
-noIterationsInput <- 2000
+c_Input <- 0.5
+noIterationsInput <- 5000
 
 
 
@@ -234,14 +234,50 @@ rwmSampler <- function(logPostFunc,sigma, initalTheta,c,noIterations, ...) {
 		hist(steps[,i], main=paste("posterior beta num",i))
 		
 	}
+		for(i in c(1:9)) {
+		plot(steps[,i], type="l", main=paste("Steps for posterior beta num",i))
+		
+	}
 	par(mfrow=c(1,1))
 
 ```
+
+As one can see in the histograms above the MCMC converges to about the same value as the coefficients for the GLM model in a). However in the case of bayesian approch we are presented with a distrubution for $\tilde{\beta}$ rather than a singular value. The line plots show how the value for each individual beta changed with each iteration. Here the line plots are squished together for the sake of the report. In RStudio we studied each plot one by one and came to the conclusion mentioned earlier.
+
+### d)
+
+```{r}
+
+#d)
+
+b_tilde <- c()
+features <- c(1,1,1,1,0,0,0,1,0.5)
+for (i in c(1:9)) {
+	b_tilde[i] <- median(steps[,i])
+}
+lambda_tilde <- exp(t(features)%*%b_tilde)
+
+predicted_draws <- rpois(10000,lambda_tilde)
+
+hist(predicted_draws, main="Predicitve distribution",xlab="Number of bidders")
+
+prob_for_zero_bidders <- sum(ifelse(predicted_draws==0,1,0))/(length(predicted_draws))
+
+
+
+```
+
+
+In the histogram above one can see the predicitve distribution for the number of bidders given the vector (`r features`) where the feature Const is set to 1 according to previous data. The $\tilde{\beta}$ is calculated using the median of the MCMC draws in c). Using these values and the given feature vector $\lambda$ is calculated according to $\lambda=exp(x^T\beta)$. The predictive distriibution was simulated using $y|\beta\sim Poisson[\lambda]$. Using this simulated distribution the probablility of 0 bidders was calulated to be `r prob_for_zero_bidders`.
 
 \newpage
 
 ## Appendix for code
 
 ```{r, code=readLines("Lab_3.R"), echo=TRUE, eval=FALSE}
+
+```
+
+```{r, code=readLines("Lab_3_2.R"), echo=TRUE, eval=FALSE}
 
 ```

@@ -62,22 +62,23 @@ B_tilde <- OptimResults$par
 
 # c)
 
+
 sigmaInput <- inverse_hessian
 initalThetaInput <- c(rep(0,nrow(sigmaInput)))
-c_Input <- 0.1
-noIterationsInput <- 2000
+c_Input <- 0.5
+noIterationsInput <- 5000
 
 
 
 rwmSampler <- function(logPostFunc,sigma, initalTheta,c,noIterations, ...) {
-
+	
 	outSteps <- matrix(nrow=noIterations, ncol = length(initalTheta))
 	outSteps[1,] <- initalTheta
 	
 	for (i in c(2:noIterations)) {
 		nextTheta <- as.vector(rmvnorm(1, outSteps[i-1,],c * sigma))
 		r <- exp(logPostFunc(nextTheta,...) - logPostFunc(outSteps[i-1,],...))
-		print(r)
+		
 		
 		if(r > runif(1)){
 			outSteps[i,] <- nextTheta
@@ -87,18 +88,37 @@ rwmSampler <- function(logPostFunc,sigma, initalTheta,c,noIterations, ...) {
 	}
 	return(outSteps)
 }
-c_v<- c(seq(0.01,1,0.01))
-for(c in c(1:length(c_v))){
-	c_Input <- c_v[c]
-	steps <- rwmSampler(LogPostPoisson,sigmaInput, initalThetaInput,c_Input,noIterationsInput,y, X, mu, 100 * XTX_inv)
+
+
+
+steps <- rwmSampler(LogPostPoisson,sigmaInput, initalThetaInput,c_Input,noIterationsInput,y, X, mu, 100 * XTX_inv)
+
+
+for(i in c(1:9)) {
+	hist(steps[,i], main=paste("posterior beta num",i))
 	
-	par(mfrow=c(3,3))
-	for(i in c(1:9)) {
-		hist(steps[,i],xlim=c(-2.5,2.5), ylim=c(0,1300), main=i)
-		
-	}
-	par(mfrow=c(1,1))
 }
 
+for(i in c(1:9)) {
+	plot(steps[,i], type="l", main=paste("Steps for posterior beta num",i))
+	
+}
+
+
+
+#d)
+
+b_tilde <- c()
+features <- c(1,1,1,1,0,0,0,1,0.5)
+for (i in c(1:9)) {
+	b_tilde[i] <- median(steps[,i])
+}
+lambda_tilde <- exp(t(features)%*%b_tilde)
+
+predicted_draws <- rpois(10000,lambda_tilde)
+
+hist(predicted_draws, main="Predicitve distribution")
+
+prob_for_zero_bidders <- sum(ifelse(predicted_draws==0,1,0))/(length(predicted_draws))
 
 
