@@ -44,11 +44,14 @@ omega_0.inv <- solve(omega_0)
 betas <- c()
 
 
+
+
 for (sigma in sigma_sq) {
 	beta <- rmvnorm(1, my_0, sigma * omega_0.inv)
 	#tmp <- cbind(sigma, beta)
 	betas <- rbind(betas, beta)
 }
+
 
 
 linear_matrix <- c()
@@ -151,6 +154,23 @@ for (i in 1:nrow(data)) {
 	
 }
 
+hist(betas_posterior[, 1], xlab = "B0 (intercept)")
+```
+
+```{r}
+
+hist(betas_posterior[, 2], xlab = "B1 (slope)")
+
+```
+
+```{r}
+
+hist(betas_posterior[, 3], xlab = "B2 (curve)")
+
+```
+
+
+```{r}
 ggplot() + geom_point(aes(x=data$time,y=data$temp)) + geom_line(aes(x=data$time,y=cis[,2])) + geom_line(aes(x=data$time,y=cis[,1],color="upper")) + geom_line(aes(x=data$time,y=cis[,3],color="lower"))
 
 ```
@@ -227,10 +247,12 @@ OptimResults <-
 		hessian = TRUE
 	)
 
-inverse_hessian <- solve(OptimResults$hessian)
+inverse_hessian <- solve(-OptimResults$hessian)
+
+
 
 postModeNSmallChild <- OptimResults$par[7]
-stdPostNSmallChild <- sqrt(diag(-inverse_hessian)[7])
+stdPostNSmallChild <- sqrt(diag(inverse_hessian)[7])
 
 
 
@@ -259,6 +281,22 @@ glmSmallChildVar <- glmModel[["coefficients"]][["NSmallChild"]]
 
 As the variable for NSmallChild has a 95 % confidence interval between `r ciBetaNsmallChild[1]` and `r ciBetaNsmallChild[2]` we would consider this feature as an important determinant for the probability wether a woman works or not.
 
+The posterior covariance matrix is:
+
+```{r}
+
+print(inverse_hessian)
+
+```
+
+The posterior mode is:
+
+```{r}
+
+print(OptimResults$par)
+
+```
+
 ### b)
 ```{r}
 beta_posterior <- OptimResults$par
@@ -274,19 +312,22 @@ func_working_women_prob <- function(feature, betaposterior) {
 	return(tmp)
 }
 
-stdbeta <- diag(-inverse_hessian)
+stdbeta <- (inverse_hessian)
 
 sim_beta <-
 	rmvnorm(10000,
 					mean = beta_posterior,
-					sigma = -solve(OptimResults$hessian))
+					sigma = stdbeta)
 
 probability_of_work <- c()
 for (i in 1:nrow(sim_beta)) {
 	probability_of_work <-
 		rbind(probability_of_work, (func_working_women_prob(features, sim_beta[i, ])))
 }
-hist(probability_of_work)
+
+prediction_working_woman<- ifelse(probability_of_work>0.5,1,0)
+
+hist(prediction_working_woman,main="Posterior distribution",xlab="")
 
 ```
 
