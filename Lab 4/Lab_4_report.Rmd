@@ -1,0 +1,77 @@
+---
+title: "Lab 4 - TDDE07"
+author: "Axel Holmberg (axeho681), Wilhelm Hansson (wilha431)"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## 1
+
+### a)
+
+```{r}
+
+T <- 200
+mu <- 10
+sigma_2 <- 2
+
+phi <- seq(-1,1,0.05)
+
+AR_func <- function(mu, phi, x_prev, e_mu, e_sigma_sq) {
+	err <- rnorm(1, e_mu, sqrt(e_sigma_sq))
+	#print(err)
+	#err <- 0
+	return(mu + phi * (x_prev - mu) + err)
+}
+
+
+calced_val <- matrix(nrow = T,ncol=length(phi))
+xt <- mu
+#xt <- rnorm(1,mu,)
+
+for (i in 1:length(phi)) {
+	for (t in 1:T) {
+		xt <- AR_func(mu,phi[i],xt,0,sigma_2)
+		calced_val[t,i] <- xt
+	}
+}
+
+df <- data.frame(calced_val)
+colnames(df) <- phi
+plot_df <- ggplot() +
+	geom_line(aes(x=1:nrow(calced_val),y=as.matrix(df["-0.2"]),color="-0.2")) +
+	geom_line(aes(x=1:nrow(calced_val),y=as.matrix(df["0.2"]),color="0.2")) +
+	xlab("value of T") + ylab("xt") + labs(colour="phi =")
+plot_df_2 <- ggplot() +
+	geom_line(aes(x=1:nrow(calced_val),y=as.matrix(df["0.9"]),color="0.9")) +
+	geom_line(aes(x=1:nrow(calced_val),y=as.matrix(df["-0.9"]),color="-0.9")) +
+	xlab("value of T") + ylab("xt") + labs(colour="phi =")
+
+
+plot_df
+
+
+```
+
+```{r}
+plot_df_2
+```
+
+
+As one can see in the plot above, the observed variance of $x_t$ is lower for lower values of $\phi$. One can also see a difference between large positive and large negative values of $\phi$.
+
+
+\newpage
+
+## Appendix for code
+
+```{r, code=readLines("Lab_4.R"), echo=TRUE, eval=FALSE}
+
+```

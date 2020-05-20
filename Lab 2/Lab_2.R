@@ -1,4 +1,4 @@
-setwd("~/Programming/TDDE07/Lab 2")
+
 library(ggplot2)
 data <-
 	read.delim("TempLinkoping.txt",
@@ -52,6 +52,9 @@ for (i in 2:nrow(linear_matrix)) {
 	
 }
 
+
+# b)
+
 library(Rmisc)
 X <- cbind(rep.int(1, 365), data[, 1], I(data[, 1] ^ 2))
 Y <- data[, 2]
@@ -80,35 +83,16 @@ hist(betas_posterior[, 1], xlab = "B0 (intercept)")
 hist(betas_posterior[, 2], xlab = "B1 (slope)")
 hist(betas_posterior[, 3], xlab = "B2 (curve)")
 
-calctemp <- function(x) {
-	return(
-		median(betas_posterior[, 1]) + median(betas_posterior[, 2]) * x + median(betas_posterior[, 3]) *
-			x ^ 2
-	)
-}
-
-
-
-conf_i <- function(betas) {
-	tmp <- sort(betas)
-	tmp_cols <- cbind(tmp[,0.025 * nrow(betas)], tmp[,0.975 * nrow(betas)])
-	return(tmp_cols)
-}
 
 out <- c()
 for (time in data$time) {
 	ys <- c()
-	for (i in 1:10) { #INCREASE
-		betas_posterior_tmp <- c()
-		for (sigma_sq in sigmas_sq) {
-			beta_posterior_tmp <- rmvnorm(1, my_n, sigma_sq * solve(omega_n))
-			betas_posterior_tmp <-
-				rbind(betas_posterior_tmp, beta_posterior_tmp)
-		}
+	for (i in 1:nrow(betas_posterior)) { #INCREASE
 		
-		b0m_tmp <- median(betas_posterior_tmp[, 1])
-		b1m_tmp <- median(betas_posterior_tmp[, 2])
-		b2m_tmp <- median(betas_posterior_tmp[, 3])
+		
+		b0m_tmp <- betas_posterior[i,1]
+		b1m_tmp <- betas_posterior[i,2]
+		b2m_tmp <- betas_posterior[i,3]
 		
 		y <-  b0m_tmp + b1m_tmp * time + b2m_tmp * time ^ 2
 		ys <- cbind(ys, y)
@@ -118,20 +102,22 @@ for (time in data$time) {
 	
 }
 
-cis <- c()
-for (i in 1:nrow(data)) { 
-	ci_tmp <- CI(out[i,])
-	cis <- rbind(cis,cbind(ci_tmp[1],median(out[i,]),ci_tmp[3]))
+times_median_quantiles <- matrix(nrow=length(data$time), ncol=3)
+
+for (i in 1:nrow(out)) {
+	ci <- quantile(out[i,], c(0.025,0.975))
+	times_median_quantiles[i,1] = ci[1]
+	times_median_quantiles[i,3] = ci[2]
+	times_median_quantiles[i,2] = median(out[i,])
 	
 }
 
-
 ggplot() + geom_point(aes(x = data$time, y = data$temp)) + geom_line(aes(x =
-	data$time, y = cis[, 2])) + geom_line(aes(x = data$time, y = cis[, 1], color =
-	"upper")) + geom_line(aes(x = data$time, y = cis[, 3], color = "lower"))
+	data$time, y = times_median_quantiles[, 2])) + geom_line(aes(x = data$time, y = times_median_quantiles[, 3], color =
+	"upper")) + geom_line(aes(x = data$time, y = times_median_quantiles[, 1], color = "lower"))
 
-x_tilde <- data$time[which(max(cis[,2]) == cis[,2])]
-
+x_tilde = -1 * betas_posterior[,2] / (2* betas_posterior[,3]) 
+hist(x_tilde)
 
 ################################### Ass 2 #####################################################
 library("mvtnorm") # This command reads the mvtnorm package into R's memory. NOW we can use dmvnorm function.
@@ -146,7 +132,6 @@ X <- as.matrix(data[, 2:9])
 tau <- 10
 mu <- rep(0, 8)
 sigma <- tau ^ 2 * diag(8)
-
 initVal <- rmvnorm(1, mu, sigma)
 
 
@@ -161,6 +146,7 @@ LogPostLogistic <- function(betaVect, y, X, mu, Sigma) {
 	logLik <- sum(linPred * y - log(1 + exp(linPred)))
 	#print(logLik)
 	if (abs(logLik) == Inf)
+		
 		logLik = -20000
 	# Likelihood is not finite, stear the optimizer away from here!
 	
@@ -215,62 +201,44 @@ glmModel <- glm(Work ~ 0 + ., data = data, family = binomial)
 glmSmallChildVar <- glmModel[["coefficients"]][["NSmallChild"]]
 
 #b)
-
 beta_posterior <- OptimResults$par
 
-features <- c(1, 10.0, 8, (8 / 10) ^ 2 , 10, 40, 1, 1)
+features <- c(1, 10.0, 8, 10, (10 / 10) ^ 2 , 40, 1, 1)
 
-prob_working_women <-
-	(exp(t(features) %*% t(beta_posterior))) / (1 + exp(t(features) %*% t(beta_posterior)))
+stdbeta <- (inverse_hessian)
 
-func_working_women_prob <- function(feature, betaposterior) {
-	tmp <-
-		(exp(t(feature) %*% betaposterior)) / (1 + exp(t(feature) %*% betaposterior))
-	return(tmp)
+func_working_women <- function(draws, optim_beta, optim_std) {
+	sim_beta <-
+		rmvnorm(draws,
+						mean = optim_beta,
+						sigma = optim_std)
+	return((exp(features %*% t(sim_beta))) / (1 + exp(features %*% t(sim_beta))))
 }
 
-stdbeta <- diag(-inverse_hessian)
 
-sim_beta <-
-	rmvnorm(10000,
-					mean = beta_posterior,
-					sigma = -solve(OptimResults$hessian))
 
-probability_of_work <- c()
-for (i in 1:nrow(sim_beta)) {
-	probability_of_work <-
-		rbind(probability_of_work, (func_working_women_prob(features, sim_beta[i, ])))
-}
+probability_of_work <-	func_working_women(10000, beta_posterior, stdbeta)
+
+classified_prob_of_work <- ifelse(probability_of_work>=0.5,1,0)
+
 hist(probability_of_work)
+hist(classified_prob_of_work)
 
 
 ### c)
+
 classified_women <- c()
-p_women <- rep(0,10)
+
 
 for (i in 1:10) {
-	probability_of_work <- c()
-	sim_beta <-
-		rmvnorm(10000,
-						mean = beta_posterior,
-						sigma = -solve(OptimResults$hessian))
+	probability_of_work <-
+		func_working_women(1000, beta_posterior, stdbeta)
 	
-
-	for (j in 1:nrow(sim_beta)) {
-		probability_of_work <-
-			cbind(probability_of_work, (func_working_women_prob(features, sim_beta[j, ])))
-	}
+	classified_prob_of_work <- ifelse(probability_of_work >= 0.5, 1, 0)
 	
-	probability_of_work <- ifelse(probability_of_work>=0.5,1,0)
-	#p_women[i] <- sum(probability_of_work)/10000
-	classified_women <- rbind(classified_women,probability_of_work)
+	classified_women <- rbind(classified_women, classified_prob_of_work)
 	
 }
+hist(classified_women)
 
-
-final <- c()
-for(i in 1:10000){
-	final <- cbind(final,sum(classified_women[,i]))
-}
-hist(final)
 

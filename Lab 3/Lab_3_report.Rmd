@@ -88,13 +88,18 @@ As one can see above the values from the Gibbs model varies as it simulates $\si
 
 ### b)
 
+
+The plots below shows iteration 1, 3, 5 and 1000 of the Gibbs sampling data augmentation algorithm. As one can see it starts at the same place, but as it iterates it splits into two normal distributions, each describing a part of the data well. The combined value of this can be seen in the dashed red line showing the Mixture normal model.
+
 ![Iterations](Mix_Norm_Model.png)
 
-The plots above shows iteration 1, 3, 5 and 1000 of the Gibbs sampling data augmentation algorithm. As one can see it starts at the same place, but as it iterates it splits into two normal distributions, each describing a part of the data well. The combined value of this can be seen in the dashed red line showing the Mixture normal model.
+\newpage
 
 ![Final Fitted](Final_fitted.png)
 
 The plot above shows the final fitted version of the mixture model as well as a normal distribution based on the mean and variance of the original data.
+
+\newpage
 
 ### c)
  
