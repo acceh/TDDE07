@@ -87,16 +87,21 @@ This estimation is not as good. This is particularly the case for $\mu$. $\mu$ i
 
 #### ii)
 
-![Convergence for of mu and phi for x](b_ii_x.png)
+![Joint posterior for of mu and phi for x](b_ii_x.png)
 
 
 The plot above shows the joint posterior of $\phi$ and $\mu$ for data based on $\phi=0.3$. As one can see there is a high density in the middle of the cluster of the sampled values. The middle of the cluster is the mean of each of the paramaters, which can be seen above in i).
 
 \newpage
 
-![Convergence for of mu and phi for y](b_ii_y.png)
+![Join posterior for of mu and phi for y](b_ii_y.png)
+
 
 The plot above shows the joint posterior of $\phi$ and $\mu$ for data based on $\phi=0.95$. Here one can see that the sampled values of $\phi$ is more uniformly distributed between about 1 and 0.9 while the majority of the sampled values for $\mu$ are all almost the same value, except a small portion of large outliers.
+
+\newpage
+
+![Converge for mu and phi for x and y](convergence.png)
 
 \newpage
 

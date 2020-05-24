@@ -100,6 +100,12 @@ plot(params_yfit_mu, params_yfit_phi)
 # The plot above shows the joint posterior of $\phi$ and $\mu$ for data based on $\phi=0.95$. Here one can see that the sampled values of $\phi$ is more uniformly distributed between about 1 and 0.9
 # while the majority of the sampled values for $\mu$ are all almost the same value, except a small portion of large outliers.
 
+par(mfrow=c(2,2))
+plot(params_xfit_mu, type="l")
+plot(params_xfit_phi, type="l")
+plot(params_yfit_mu, type="l")
+plot(params_yfit_phi, type="l")
+par(mfrow=c(1,1))
 
 # c)
 
